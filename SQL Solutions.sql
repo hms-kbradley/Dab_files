@@ -110,7 +110,39 @@ SELECT released_year,
 
 /*==========
   Write a SQL query to group by release_year and get the highest streaming track for each year.
+
 ==========*/
+
+Select track_name, released_year,  Max(streams) 
+FROM track_streams
+left join track_names on track_streams.Track_id = track_names.Track_id
+group by released_year;
+
+
+/*==========
+Same as above using a CTE (Common Table Expression or 'With' Statement)
+Write a SQL query to group by release_year and get the highest streaming track for each year.
+==========*/ 
+
+
+With ranked_streams as (
+Select track_id, released_year, streams, 
+Row_Number() OVER (Partition By released_year order by streams desc) rank
+FROM track_streams
+)
+SELECT 
+  ranked_streams.released_year, 
+  track_names.track_name, 
+  GROUP_CONCAT(track_artist.artist, '; ') AS artist_group, 
+  ranked_streams.streams 
+FROM ranked_streams
+LEFT JOIN track_names ON ranked_streams.track_id = track_names.Track_id
+LEFT JOIN track_artist ON ranked_streams.Track_id = track_artist.Track_id
+WHERE rank = 1
+GROUP BY ranked_streams.released_year, track_names.track_name, ranked_streams.streams
+ORDER BY ranked_streams.released_year ASC;
+
+
 
 /*==========
   Write a SQL query to classify tracks based on danceability.
